@@ -1,5 +1,7 @@
-from flask import Flask, abort, render_template
 from datetime import datetime
+
+from flask import Flask, abort, render_template
+
 FAVORITES = [
     {"id": 1, "title": "Intergalactic", "why": "The beat!"},
     {"id": 2, "title": "I Like It", "why": "It makes me want to dance"},
@@ -7,8 +9,14 @@ FAVORITES = [
     {"id": 4, "title": "En la Ciudad de la Furia", "why": "My dad's favorite song"},
 ]
 
+GAMES = [
+    {"id": 1, "title": "Valorant", "why": "Me and my friends grinded to Immortal on this game, it took up all of my high school years"},
+    {"id": 2, "title": "NBA 2K27", "why": "My current favorite game to play with my friends"},
+    {"id": 3, "title": "Tetris", "why": "I used to grind tetr.io in highschool as well, but I was not too good"},
+    {"id": 4, "title": "Ghost of Yotei", "why": "The best game ever created, cmon now"},
+]
 
-    
+
 def create_app():
     app = Flask(__name__)
     setup_routes(app)
@@ -20,7 +28,7 @@ def index():
         "index.html",
         name="Brandon Valadez",
         hobby="Playing Video Games",
-        hours_per_week=15,  # roughly how many hours a week you spend on it
+        hours_per_week=15, 
         fun_fact="I can play the accordion",
         hour=datetime.now().hour,
         show_counter=True,
@@ -35,9 +43,22 @@ def favorite_detail(favorite_id: int):
     abort(404)
 
 
+def games():
+    return render_template("games.html", games=GAMES)
+
+
+def game_detail(game_id: int):
+    for game in GAMES:
+        if game["id"] == game_id:
+            return render_template("game.html", game=game)
+    abort(404)
+
+
 def setup_routes(app):
     app.route("/")(index)
     app.route("/favorites/<int:favorite_id>")(favorite_detail)
+    app.route("/games")(games)
+    app.route("/games/<int:game_id>")(game_detail)
 
 
 def run_app(debug: bool = True) -> None:
@@ -45,7 +66,5 @@ def run_app(debug: bool = True) -> None:
     app.run(debug=debug)
 
 
-
 if __name__ == "__main__":
-    app = create_app()
-    app.run(debug=True)
+    run_app(debug=True)
