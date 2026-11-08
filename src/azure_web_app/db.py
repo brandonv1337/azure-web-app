@@ -151,6 +151,12 @@ class Database:
                 (session_id,),
             )
             return cursor.fetchone()
+        
+    def delete_user_sessions(self, user_id: int) -> None:
+        """Remove every session that belongs to this user ("log out everywhere")."""
+        with self.connection.cursor() as cursor:
+            cursor.execute("DELETE FROM Sessions WHERE userid = ?", (user_id,))
+        self.connection.commit()
 
 
 def get_db() -> Database:

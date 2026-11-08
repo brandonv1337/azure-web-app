@@ -69,13 +69,17 @@ def game_detail(game_id: int):
 def account():
     return render_template("account.html")
 
+@login_required
+def game_night():
+    return render_template("game_night.html", games=GAMES)
+
 def setup_routes(app):
     app.route("/")(index)
     app.route("/favorites/<int:favorite_id>")(favorite_detail)
     app.route("/games")(games)
     app.route("/games/<int:game_id>")(game_detail)
     app.route("/account")(account)
-
+    app.route("/game-night")(game_night)
 
 def run_app(debug: bool = True) -> None:
     app = create_app()

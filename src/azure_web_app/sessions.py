@@ -13,6 +13,7 @@ import functools
 import hashlib
 import hmac
 import os
+from datetime import datetime, timezone
 
 from flask import Flask, Response, g, redirect, request, url_for
 
@@ -22,12 +23,6 @@ from azure_web_app.db import get_db
 
 def get_app_secret() -> bytes:
     """Read the app secret from the environment, the same way db.py reads the connection string."""
-    # ======================= GUIDE HELPER: DELETE BEFORE YOU SUBMIT =======================
-    # This check only exists to give you a clearer error message while you work
-    # through the guide. Delete everything between the two GUIDE HELPER lines.
-    if not os.environ.get(APP_SECRET_VARIABLE):
-        raise RuntimeError(f"{APP_SECRET_VARIABLE} is not set. Add it to your .secret.env file and to Azure.")
-    # ===================================== END GUIDE HELPER =====================================
 
     return os.environ[APP_SECRET_VARIABLE].encode()
 
@@ -86,6 +81,14 @@ def clear_session_cookie(response: Response) -> None:
     response.delete_cookie(SESSION_COOKIE_NAME, httponly=True, samesite="Lax", secure=running_on_azure())
 
 
+def utc_now() -> datetime:
+    """The current time in UTC, without a timezone attached.
+
+    The database's GETDATE() runs on Azure's clock, which is UTC, and the
+    expiry column has no timezone. So we compare it to "now" in UTC, too.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 def load_current_user() -> None:
     """Look up the logged-in user before every request and store it in g.current_user.
 
@@ -102,9 +105,26 @@ def load_current_user() -> None:
     if session_id is None:
         return
 
+    db = get_db()
     # This is None if the session isn't in the table anymore (for example,
     # because the user logged out somewhere else).
-    g.current_user = get_db().get_session_user(session_id)
+    user = db.get_session_user(session_id)
+
+    # Expired sessions count as logged out. Delete the row so it doesn't pile
+    # up, and remember to delete the cookie once the response is ready.
+    if user is not None and user.expiry <= utc_now():
+        db.delete_session(session_id)
+        g.clear_session_cookie = True
+        return
+
+    g.current_user = user
+
+
+def clear_expired_cookie(response: Response) -> Response:
+    """After every request: delete the cookie if load_current_user found it expired."""
+    if g.get("clear_session_cookie"):
+        clear_session_cookie(response)
+    return response
 
 
 def inject_current_user() -> dict:
@@ -130,4 +150,5 @@ def login_required(view):
 def setup_sessions(app: Flask) -> None:
     """Hook sessions into the app. Call this from create_app()."""
     app.before_request(load_current_user)
+    app.after_request(clear_expired_cookie)
     app.context_processor(inject_current_user)

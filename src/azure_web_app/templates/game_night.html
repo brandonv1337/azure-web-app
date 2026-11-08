@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Game Night{% endblock %}
+
+{% block content %}
+  <h1>Game Night</h1>
+  <p class="lead">Members only. Welcome, {{ current_user.display_name }}! Here's what's in the rotation:</p>
+  <ul class="list-group">
+    {% for game in games %}
+      <li class="list-group-item">
+        <a href="{{ url_for('game_detail', game_id=game.id) }}">{{ game.title }}</a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

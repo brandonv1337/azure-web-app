@@ -21,6 +21,7 @@
           <a class="nav-link" href="{{ url_for('games') }}">Games</a>
           {% if current_user %}
           <a class="nav-link" href="{{ url_for('account') }}">My account</a>
+          <a class="nav-link" href="{{ url_for('game_night') }}">Game Night</a>
           {% endif %}
         </div>
         {% include "components/account_nav.html" %}

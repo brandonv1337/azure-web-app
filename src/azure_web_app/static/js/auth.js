@@ -163,8 +163,10 @@ async function submitLoginForm(event) {
 	// Show the server's message whether the login worked or not.
 	alert(reply.result.message);
 
+	// Send them to their account page. Loading a new page also gets a fresh
+	// navbar from the server, which now knows who they are.
 	if (reply.response.ok) {
-		window.location.reload();
+		window.location.href = "/account";
 	}
 }
 
@@ -177,6 +179,17 @@ async function logout() {
 	}
 	// Go back to the home page. This loads a fresh page, so the navbar is
 	// rendered again without the session cookie.
+	window.location.href = "/";
+}
+
+// Runs when the "Log out everywhere" button on the account page is clicked.
+async function logoutEverywhere() {
+	const reply = await postJson("/logout-everywhere", {});
+	if (reply === null || !reply.response.ok) {
+		alert("Logout failed. Please try again.");
+		return;
+	}
+	alert("You have been logged out on every device.");
 	window.location.href = "/";
 }
 
@@ -212,6 +225,8 @@ function attachEventListeners() {
 	document.getElementById("loginForm")?.addEventListener("submit", submitLoginForm);
 	
 	document.getElementById("logoutButton")?.addEventListener("click", logout);
+
+	document.getElementById("logoutEverywhereButton")?.addEventListener("click", logoutEverywhere);
 
 	for (const input of document.querySelectorAll("input")) {
 		input.addEventListener("input", clearValidation);

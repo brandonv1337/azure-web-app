@@ -8,7 +8,7 @@ Notice that there's no SQL in this file. Endpoints decide what should happen;
 the Database class in db.py does the talking to the database.
 """
 
-from flask import Flask, make_response, request
+from flask import Flask, g, make_response, request
 from flask_bcrypt import check_password_hash, generate_password_hash
 from flask_restful import Api, Resource
 
@@ -174,6 +174,20 @@ class Logout(Resource):
         response = make_response({"message": "Logged out"}, 200)
         clear_session_cookie(response)
         return response
+    
+
+class LogoutEverywhere(Resource):
+    def post(self):
+        # load_current_user already ran before this request and looked up who
+        # is logged in, so we don't need to read the cookie ourselves.
+        if g.current_user is None:
+            return {"message": "You are not logged in"}, 401
+
+        get_db().delete_user_sessions(g.current_user.userid)
+
+        response = make_response({"message": "Logged out everywhere"}, 200)
+        clear_session_cookie(response)
+        return response
 
 
 def setup_auth(app: Flask) -> None:
@@ -184,3 +198,4 @@ def setup_auth(app: Flask) -> None:
     api.add_resource(Register, "/register")
     api.add_resource(Login, "/login")
     api.add_resource(Logout, "/logout")
+    api.add_resource(LogoutEverywhere, "/logout-everywhere")
