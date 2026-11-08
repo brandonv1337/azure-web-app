@@ -22,25 +22,6 @@ def get_connection_string() -> str:
     
     # On your laptop, create_app() loads it from your .secret.env file. On Azure,
     # it comes from the environment variable you set in the portal.
-    # ======================= GUIDE HELPER: DELETE BEFORE YOU SUBMIT =======================
-    # These checks only exist to give you clearer error messages while you work
-    # through the guide. Delete everything between the two GUIDE HELPER lines.
-    connection_string = os.environ.get(CONNECTION_STRING_VARIABLE)
-    if not connection_string:
-        raise RuntimeError(
-            f"{CONNECTION_STRING_VARIABLE} is not set. Locally, check that your .secret.env "
-            "file is in the project root (next to pyproject.toml). On Azure, check the web "
-            "app's environment variables."
-        )
-    # mssql-python ships with its own driver and refuses connection strings that
-    # try to pick one. The string the Azure portal gives you was written for
-    # pyodbc, so it starts with Driver={...}.
-    if "driver=" in connection_string.lower():
-        raise RuntimeError(
-            f"Delete the 'Driver={{ODBC Driver 18 for SQL Server}};' part of "
-            f"{CONNECTION_STRING_VARIABLE}. mssql-python includes its own driver."
-        )
-    # ===================================== END GUIDE HELPER =====================================
 
     return os.environ[CONNECTION_STRING_VARIABLE]
 
